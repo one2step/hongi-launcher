@@ -120,14 +120,16 @@ def check_tailscale() -> tuple[bool, str]:
         result = _run(["tailscale", "status", "--json"], timeout=8)
         if result.returncode != 0:
             return False, f"tailscale status failed (exit {result.returncode})"
+        if not result.stdout:
+            return False, "Tailscale daemon not responding"
         data = json.loads(result.stdout)
         state = data.get("BackendState", "")
         if state == "Running":
             return True, "Tailscale OK"
-        return False, f"Tailscale state: {state}"
+        return False, f"Tailscale state: {state or 'unknown'}"
     except FileNotFoundError:
         return False, "Tailscale not installed"
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, ValueError):
         return False, "Tailscale output parse error"
     except subprocess.TimeoutExpired:
         return False, "Tailscale check timed out"
