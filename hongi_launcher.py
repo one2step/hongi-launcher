@@ -115,9 +115,29 @@ def _bring_to_front(app: "HongiLauncher") -> None:
 # ---------------------------------------------------------------------------
 # Prereq checks
 # ---------------------------------------------------------------------------
+def _tailscale_bin() -> str:
+    """Return the tailscale CLI path, with OS-specific fallbacks."""
+    import shutil
+    if shutil.which("tailscale"):
+        return "tailscale"
+    if WIN32:
+        for p in [
+            r"C:\Program Files\Tailscale\tailscale.exe",
+            os.path.expandvars(r"%PROGRAMFILES%\Tailscale\tailscale.exe"),
+            os.path.expandvars(r"%LOCALAPPDATA%\Programs\Tailscale\tailscale.exe"),
+        ]:
+            if os.path.isfile(p):
+                return p
+    else:
+        mac_bin = "/Applications/Tailscale.app/Contents/MacOS/Tailscale"
+        if os.path.isfile(mac_bin):
+            return mac_bin
+    return "tailscale"  # will raise FileNotFoundError downstream
+
+
 def check_tailscale() -> tuple[bool, str]:
     try:
-        result = _run(["tailscale", "status", "--json"], timeout=8)
+        result = _run([_tailscale_bin(), "status", "--json"], timeout=8)
         if result.returncode != 0:
             return False, f"tailscale status failed (exit {result.returncode})"
         if not result.stdout:
