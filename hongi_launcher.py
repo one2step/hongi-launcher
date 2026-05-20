@@ -754,7 +754,7 @@ class HongiLauncher(tk.Tk):
         if self._setup_view:
             self._setup_view.set_ssh(ssh_ok, ssh_msg)
 
-        if ts_ok and ssh_ok and not self._in_setup:
+        if ts_ok and ssh_ok:
             self._show_main()
 
 
